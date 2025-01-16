@@ -1,4 +1,4 @@
-data_path: routerbench_5shot.pkl
+data_path: dataset/routerbench/routerbench_5shot.pkl
 train_fraction: 0.7
 willingness_to_pay: true
 local: true
