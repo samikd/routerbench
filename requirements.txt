@@ -64,7 +64,7 @@ mdurl==0.1.2
 modal==0.55.4073
 more-itertools==10.1.0
 mpmath==1.3.0
-multidict==6.0.4
+multidict>=6.0.4,<7.0.0
 mypy-extensions==1.0.0
 networkx==3.2.1
 nltk==3.8.1
