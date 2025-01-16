@@ -133,3 +133,4 @@ watchfiles==0.21.0
 yarl==1.9.2
 zipp==3.17.0
 jsonargparse==4.27.5
+ipython==8.30.0
