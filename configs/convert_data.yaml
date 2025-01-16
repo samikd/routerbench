@@ -1,4 +1,4 @@
-data_path: routerbench_raw.pkl
+data_path: dataset/routerbench/routerbench_raw.pkl
 input_format: openai
 data_name: routerbench
 embedding_models: ["all-MiniLM-L12-v2",]
