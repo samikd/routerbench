@@ -1,7 +1,6 @@
 adapters/
 .dvc/
 tx_logs/
-*.jsonl
 *.pkl
 *.csv
 
