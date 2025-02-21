@@ -135,9 +135,40 @@ def write_mmlu(mmlu, llm, suffix):
         for conv in conversations:
             f.write(json.dumps(conv) + "\n")
 
+def _judgement(base_model_score, other_model_score):
+    if base_model_score > other_model_score:
+        return "Model A is SLIGHTLY_BETTER than Model B"
+    elif base_model_score < other_model_score:
+        return "Model A is SLIGHTLY_WORSE than Model B"
+    else:
+        return "Model A is EQUAL_TO Model B"
 
 def write_mmlu_test(mmlu):
-    pass
+     # Create conversation records in the desired format
+    conversations = []
+    for idx, row in mmlu.iterrows():
+        conversation = {
+            "evaluation_label": _judgement(base_model_score=row["gpt-4-1106-preview"], other_model_score=row["gpt-3.5-turbo-1106"]),
+            "explanation": "RouterBench's Judgement.",
+            "metadata": {
+                "conversation_id": f"{idx}",
+                "request_id": "",
+                "evaluator_model": "routerbench-judge",
+                "evaluator_version": "",
+                "evaluation_timestamp": "",
+                "model_being_evaluated": "gpt-3.5-turbo-1106",
+                "base_model": "gpt-4-1106-preview"
+            }
+        }
+        conversations.append(conversation)
+
+    # Write to JSONL file
+    import json
+
+    output_path = f"data/mmlu_test.jsonl"
+    with open(output_path, "w") as f:
+        for conv in conversations:
+            f.write(json.dumps(conv) + "\n")
 
 
 def write_mmlu_train(mmlu, llm):
@@ -178,7 +209,7 @@ if __name__ == "__main__":
     print(mmlu.columns)
 
     write_mmlu_train(train, "gpt-4-1106-preview") # FIXME
-
+    write_mmlu_test(test)
     write_mmlu(train, "gpt-4-1106-preview", suffix="train")
     write_mmlu(train, "gpt-3.5-turbo-1106", suffix="train")
 
