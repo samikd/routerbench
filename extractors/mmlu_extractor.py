@@ -1,5 +1,6 @@
 import pandas as pd
 import ast
+from sklearn.model_selection import train_test_split
 
 
 def read_mmlu(file_path):
@@ -98,7 +99,18 @@ def read_mmlu(file_path):
     )
 
 
-def write_mmlu(mmlu, llm):
+def split_mmlu(mmlu):
+    mmlu_slice = mmlu.sample(n=300, random_state=42)
+
+    train = mmlu_slice.sample(frac=2.0 / 3.0, random_state=42)
+    test = mmlu_slice.drop(train.index)
+
+    print(f"Train: {train.shape}, Test: {test.shape}.")
+
+    return train, test
+
+
+def write_mmlu(mmlu, llm, suffix):
     # Create conversation records in the desired format
     conversations = []
     for idx, row in mmlu.iterrows():
@@ -118,7 +130,37 @@ def write_mmlu(mmlu, llm):
     # Write to JSONL file
     import json
 
-    output_path = f"data/mmlu_{llm}.jsonl"
+    output_path = f"data/mmlu_{llm}_{suffix}.jsonl"
+    with open(output_path, "w") as f:
+        for conv in conversations:
+            f.write(json.dumps(conv) + "\n")
+
+
+def write_mmlu_test(mmlu):
+    pass
+
+
+def write_mmlu_train(mmlu, llm):
+    # Create conversation records in the desired format
+    conversations = []
+    for idx, row in mmlu.iterrows():
+        conversation = {
+            "conversation_id": f"{idx}",
+            "messages": [
+                {"role": "user", "content": row["first_turn_prompt"]},
+                {
+                    "role": "assistant",
+                    "content": row[f"first_turn_response_{llm}"],
+                },
+            ],
+            "optimal_llm": row["optimal_llm"],
+        }
+        conversations.append(conversation)
+
+    # Write to JSONL file
+    import json
+
+    output_path = f"data/mmlu_train.jsonl"
     with open(output_path, "w") as f:
         for conv in conversations:
             f.write(json.dumps(conv) + "\n")
@@ -126,5 +168,19 @@ def write_mmlu(mmlu, llm):
 
 if __name__ == "__main__":
     mmlu = read_mmlu("data/routerbench/input_wide__01-16-10__routerbench.pkl")
-    write_mmlu(mmlu, "gpt-3.5-turbo-1106")
-    write_mmlu(mmlu, "gpt-4-1106-preview")
+
+    mmlu["optimal_llm"] = mmlu[["gpt-3.5-turbo-1106", "gpt-4-1106-preview"]].idxmax(
+        axis=1
+    )
+
+    train, test = split_mmlu(mmlu)
+
+    print(mmlu.columns)
+
+    write_mmlu_train(train, "gpt-4-1106-preview") # FIXME
+
+    write_mmlu(train, "gpt-4-1106-preview", suffix="train")
+    write_mmlu(train, "gpt-3.5-turbo-1106", suffix="train")
+
+    write_mmlu(test, "gpt-4-1106-preview", suffix="test")
+    write_mmlu(test, "gpt-3.5-turbo-1106", suffix="test")
