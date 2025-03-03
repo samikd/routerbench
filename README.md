@@ -47,10 +47,107 @@ isort $(git ls-files '*.py')
 `$(git ls-files '*.py')` is for running only the files tracked by git, so exclude virtual env files or data files.
 You may need to run `pip install flake8 black isort` if you don't have them installed.
 
+
+# MMLU Ground Truth Extractor
+
+This script extracts ground truth answers from the MMLU (Massive Multitask Language Understanding) dataset using the Hugging Face datasets library.
+
+## Features
+
+- Extracts questions and answers from all MMLU dataset splits
+- Saves output in JSON format
+
+## Requirements
+
+```bash
+pip install datasets tqdm
+```
+
+## Usage
+
+### As a Script
+
+1. Simple usage with default settings:
+```bash
+python extract_mmlu_hf.py
+```
+
+This will:
+- Process all splits (test, auxiliary_train, dev, validation)
+- Save the output to `all_mmlu_splits.json`
+- Use default cache directory for dataset downloads
+
+### As a Module
+
+```python
+from extract_mmlu_hf import extract_mmlu_ground_truth, setup_logging
+
+# Set up logging (optional)
+setup_logging()
+
+# Basic usage
+data = extract_mmlu_ground_truth("all_mmlu_splits.json")
+
+# Advanced usage with custom parameters
+data = extract_mmlu_ground_truth(
+    output_file="custom_output.json",
+    cache_dir="/path/to/cache",
+    splits=["test", "validation"]  # Only process specific splits
+)
+```
+
+## Output Format
+
+The script generates a JSON file with the following structure:
+
+```json
+{
+    "question1": "answer1",
+    "question2": "answer2",
+    ...
+}
+```
+
 ## Modal update Guide
 To deploy the updated modal app, run the following commands:
 ```bash
 modal deploy modal_router.py
+```
+
+## MMLU Ground Truth Processing
+
+The `add_ground_truth_mmlu.py` script processes JSONL files containing MMLU evaluations and adds ground truth answers to them.
+
+### Features
+- Processes multiple JSONL files in batch
+- Excludes specified files (e.g., training and test sets)
+- Comprehensive error handling and logging
+- Progress tracking with detailed statistics
+- Organizes processed files in a separate directory
+
+### Usage
+
+1. Setup:
+   - Place your JSONL files in the `data/` directory
+   - Ensure `all_mmlu_splits.json` (ground truth data) is in the root directory
+
+2. Run the script:
+```bash
+python add_ground_truth_mmlu.py
+```
+
+3. Output:
+   - Processed files will be saved in `data/processed/` directory
+   - Each output file will have "_with_gt" suffix
+   - Detailed logs will show processing statistics and any issues
+
+### Configuration
+The script can be configured by modifying these variables in `main()`:
+```python
+data_dir = "data"  # Input directory containing JSONL files
+output_dir = Path("data/processed")  # Output directory for processed files
+mmlu_data_file = "all_mmlu_splits.json"  # Ground truth data file
+exclude_files = {"mmlu_train.jsonl", "mmlu_test.jsonl"}  # Files to skip
 ```
 
 ## Citation
@@ -63,3 +160,5 @@ If you use this code, please cite the following paper:
   journal = {arXiv preprint arXiv: 2403.12031}
 }
 ```
+
+
