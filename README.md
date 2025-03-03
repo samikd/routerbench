@@ -17,6 +17,7 @@ We use Martian as it provides a unified gateway to access all the models we use.
 
 ## Running the pipeilne 
 
+
 The pipeline relies on various command line arguments to specify the configuration. Alternatively, you can specify the 
 configuration in a yaml file and pass it to the command line. Example configurations are in the `configs/` directory.
 
