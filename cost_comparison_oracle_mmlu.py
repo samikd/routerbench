@@ -36,43 +36,19 @@ def calculate_prompt_cost(prompt, model_name):
     prompt_cost_per_token = TOKEN_COSTS[model_name]["prompt"]
     return num_tokens * prompt_cost_per_token
 
-def clean_answer(answer):
-    """Clean the answer for comparison."""
-    return str(answer).strip().lower()
 
-def calculate_accuracy(responses, ground_truths):
-    """Calculate accuracy for a set of responses."""
-    if len(responses) != len(ground_truths):
-        raise ValueError("Number of responses and ground truths must match")
-    
-    correct = 0
-    total = 0
-    for resp, gt in zip(responses, ground_truths):
-        if pd.isna(resp) or pd.isna(gt):
-            continue
-        if clean_answer(resp) == clean_answer(gt):
-            correct += 1
-        total += 1
-    return (correct / total) * 100 if total > 0 else 0
 
 def load_mmlu_data(file_path):
     """Load and process the MMLU test data."""
     with open(file_path, 'r') as f:
         data = json.load(f)
     df = pd.DataFrame(data)
-    
-    print("\nLoaded data structure:")
-    print("Number of rows:", len(df))
-    print("Columns:", df.columns.tolist())
-    print("\nSample of first row:")
-    print(df.iloc[0])
-    
+      
     return df
 
 def process_data(df, models):
     """Calculate costs and accuracies for each model."""
-    print("Processing data for each model...")
-    
+  
     results = {
         'costs': {},
         'accuracies': {},
@@ -93,11 +69,7 @@ def process_data(df, models):
         df[model] = df['scores'].apply(
             lambda scores_dict: 1 if scores_dict.get(json_model_name, 0) > 0 else 0
         )
-        #print(df[model].head())
-        #print(df[f"{model}_prompt_cost"].head())
-        #x = 1/0
 
-    
         # Calculate accuracy as percentage of non-zero scores
         accuracy = df[model].mean() * 100
         results['accuracies'][model] = accuracy
@@ -115,15 +87,7 @@ def process_data(df, models):
         if f"{model}_prompt_cost" not in df.columns:
             print(f"Warning: Cost column {model}_prompt_cost not found, initializing with zeros")
             df[f"{model}_prompt_cost"] = 0
-    
-    # Use get_highest_accuracy_lowest_cost for oracle selection
-    print("Calculating oracle selections...")
-    print("\nScore distribution before oracle selection:")
-    for model in models:
-        value_counts = df[model].value_counts()
-        print(f"\n{model}:")
-        print(value_counts)
-    
+        
     df['oracle_model'] = df.apply(
         lambda row: get_highest_accuracy_lowest_cost(row, models),
         axis=1
@@ -171,11 +135,6 @@ def analyze_results(df, results):
         for model, accuracy in results['accuracies'].items():
             print(f"{model}: {accuracy:.2f}%")
     
-    # Print average cost per prompt
-    print("\nAverage Cost per Prompt:")
-    for model in MODELS_TO_ANALYZE:
-        avg_cost = df[f"{model}_prompt_cost"].mean()
-        print(f"{model}: ${avg_cost:.8f}")
     
     # Print oracle statistics
     print("\nOracle (Highest Accuracy & Lowest Cost) Statistics:")
@@ -239,12 +198,6 @@ def main():
     # Process data
     df, results = process_data(df, MODELS_TO_ANALYZE)
     
-    # Debug prints
-    print("\nVerifying columns in dataframe:")
-    print("All columns:", df.columns.tolist())
-    print("\nFirst few rows of oracle columns:")
-    print(df[['oracle_model', 'oracle_cost']].head())
-    
     # Analyze results
     analyze_results(df, results)
     
@@ -263,9 +216,7 @@ def main():
     df = df[oracle_columns + other_columns]
     
     df.to_csv(output_file, index=False)
-    print(f"Saved file with {len(df.columns)} columns")
-    print("First few columns:", df.columns[:5].tolist())
-    
+
     # Save summary
     summary = {
         'costs': results['costs'],
